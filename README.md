@@ -22,6 +22,17 @@ Then open http://localhost:8501 and upload a CSV.
 
 ## Docker
 
+### Pull from Docker Hub
+
+```bash
+docker pull timothiasthegreat/ual-viewer
+docker run -p 8501:8501 timothiasthegreat/ual-viewer
+```
+
+Then open http://localhost:8501 and upload a CSV.
+
+### Build locally
+
 ```bash
 docker build -t ual-viewer .
 docker run -p 8501:8501 ual-viewer
