@@ -403,9 +403,29 @@ with tl_col2:
 
 st.header("Log Entries")
 
-display_cols = ["CreationDate", "Operation", "UserId", "Workload", "ResultStatus", "ObjectId", "ClientIP"]
-sorted_filtered = filtered[[c for c in display_cols + ["_audit_parsed"] if c in filtered.columns]].copy()
-sorted_filtered = sorted_filtered.sort_values("CreationDate", ascending=False).reset_index(drop=True)
+
+# Add AffectedItems columns for Exchange workload
+def extract_affected_item_field(audit, field):
+    if audit.get("Workload") == "Exchange":
+        affected = audit.get("AffectedItems", [])
+        if affected and isinstance(affected, list):
+            item = affected[0]
+            if isinstance(item, dict):
+                # Subject is in Item dict, Path is in Item.ParentFolder
+                if field == "Subject":
+                    return item.get("Subject", "")
+                if field == "Path":
+                    pf = item.get("ParentFolder")
+                    if isinstance(pf, dict):
+                        return pf.get("Path", "")
+    return ""
+
+display_cols = ["CreationDate", "Operation", "UserId", "Workload", "ResultStatus", "ObjectId", "ClientIP", "AffectedItems_Subject", "AffectedItems_Path"]
+
+sorted_filtered = filtered.copy()
+sorted_filtered["AffectedItems_Subject"] = sorted_filtered["_audit_parsed"].apply(lambda audit: extract_affected_item_field(audit, "Subject"))
+sorted_filtered["AffectedItems_Path"] = sorted_filtered["_audit_parsed"].apply(lambda audit: extract_affected_item_field(audit, "Path"))
+sorted_filtered = sorted_filtered[[c for c in display_cols + ["_audit_parsed"] if c in sorted_filtered.columns]].sort_values("CreationDate", ascending=False).reset_index(drop=True)
 display_df = sorted_filtered[[c for c in display_cols if c in sorted_filtered.columns]]
 
 # Show the table with row selection
